@@ -1,0 +1,68 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+.project
+.settings/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The Python 3.x cache
+__pycache__/
+
+# Flutter/Dart related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Flutter/flutter_bundle_flags.sh
+**/ios/Flutter/ephemeral/
+**/ios/Flutter/podhelper.rb
+**/ios/Flutter/Flutter.podspec
+**/ios/ServiceDefinitions.json
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will bind to the folder name, not the .iml file
+.idea/modules.xml
+.idea/libraries/
+.idea/workspace.xml
+
+# Visual Studio Code related
+.vscode/
+
+# CocoaPods (iOS)
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Podfile.lock
+
+# Log and temporary files
+*.log
+*.temp
+*.tmp
