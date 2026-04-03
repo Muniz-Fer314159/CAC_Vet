@@ -1,123 +1,125 @@
 import 'package:flutter/material.dart';
 
-// IMPORTANTE:
-// depois você vai importar suas páginas aqui
-// import '../pages/home_page.dart';
-
 class MenuLateral extends StatelessWidget {
   const MenuLateral({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 250,
-      color: const Color(0xFF003B00),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 40),
+    return Drawer(
+      child: Container(
+        color: const Color(0xFF003B00),
+        child: Column(
+          children: [
+            const SizedBox(height: 40),
 
-          Center(
-            child: Container(
-              width: 80,
-              height: 80,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.grey,
+            // LOGO
+            Center(
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.grey,
+                ),
+                alignment: Alignment.center,
+                child: const Text("Logo"),
               ),
-              alignment: Alignment.center,
-              child: const Text("Logo"),
             ),
-          ),
 
-          const SizedBox(height: 30),
+            const SizedBox(height: 30),
 
-          // ITENS DO MENU
-          _menuItem(
-            context,
-            "Home",
-            () {
-              // Exemplo de navegação
-              // Navigator.push(context, MaterialPageRoute(builder: (_) => HomePage()));
-            },
-          ),
+            // HOME
+            _botaoPrincipal(context, "Home", () {}),
 
-          const SizedBox(height: 10),
+            // CLIENTES (expansível)
+            ExpansionTile(
+              iconColor: Colors.white,
+              collapsedIconColor: Colors.white,
+              title: _tituloPrincipal("Clientes"),
+              children: [
+                _subItem(context, "Cadastro de cliente", () {}),
+                _subItem(context, "Listagem de cliente", () {}),
+              ],
+            ),
 
-          _sectionTitle("Clientes"),
+            
+            ExpansionTile(
+              iconColor: Colors.white,
+              collapsedIconColor: Colors.white,
+              title: _tituloPrincipal("Animais"),
+              children: [
+                _subItem(context, "Cadastro de animais", () {}),
+                _subItem(context, "Listagem de animais", () {}),
+              ],
+            ),
 
-          _menuItem(
-            context,
-            "Cadastro de cliente",
-            () {},
-          ),
+            const Spacer(),
 
-          _menuItem(
-            context,
-            "Listagem de cliente",
-            () {},
-          ),
+            // LOGOUT
+            _botaoPrincipal(context, "Logout", () {}),
 
-          const SizedBox(height: 10),
-
-          _sectionTitle("Animais"),
-
-          _menuItem(
-            context,
-            "Cadastro de animais",
-            () {},
-          ),
-
-          _menuItem(
-            context,
-            "Listagem de animais",
-            () {},
-          ),
-
-          const Spacer(),
-
-          _menuItem(
-            context,
-            "Logout",
-            () {
-              Navigator.pop(context);
-            },
-          ),
-
-          const SizedBox(height: 20),
-        ],
-      ),
-    );
-  }
-
-  Widget _sectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Text(
-        title,
-        style: const TextStyle(
-          color: Colors.white70,
-          fontWeight: FontWeight.bold,
+            const SizedBox(height: 20),
+          ],
         ),
       ),
     );
   }
 
-  Widget _menuItem(
+  Widget _botaoPrincipal(
     BuildContext context,
     String title,
     VoidCallback onTap,
   ) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Text(
-          title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 16,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context);
+            onTap();
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.grey[300],
           ),
+          child: Text(title, style: const TextStyle(color: Colors.black)),
+        ),
+      ),
+    );
+  }
+
+  Widget _tituloPrincipal(String title) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+      decoration: BoxDecoration(
+        color: Colors.grey[300],
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        title,
+        style: const TextStyle(color: Colors.black),
+      ),
+    );
+  }
+
+  Widget _subItem(
+    BuildContext context,
+    String title,
+    VoidCallback onTap,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 5),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context);
+            onTap();
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.grey[400],
+          ),
+          child: Text(title, style: const TextStyle(color: Colors.black)),
         ),
       ),
     );

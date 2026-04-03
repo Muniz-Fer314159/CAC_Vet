@@ -1,3 +1,4 @@
+import 'package:anchieta_flutter_todo/screens/home_page.dart';
 import 'package:flutter/material.dart';
 import 'cadastro_page.dart';
 import '../widgets/input_field.dart';
@@ -17,9 +18,14 @@ class _LoginPageState extends State<LoginPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Login válido!')),
       );
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const HomePage())
+    );
+
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
