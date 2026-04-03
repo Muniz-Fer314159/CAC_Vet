@@ -1,3 +1,4 @@
+import 'package:anchieta_flutter_todo/screens/login_page.dart';
 import 'package:flutter/material.dart';
 
 class MenuLateral extends StatelessWidget {
@@ -7,56 +8,42 @@ class MenuLateral extends StatelessWidget {
   Widget build(BuildContext context) {
     return Drawer(
       child: Container(
-        color: const Color(0xFF003B00),
+        color: const Color(0xFF0D3B0D),
         child: Column(
           children: [
-            const SizedBox(height: 40),
+            _header(),
 
-            // LOGO
-            Center(
-              child: Container(
-                width: 80,
-                height: 80,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.grey,
-                ),
-                alignment: Alignment.center,
-                child: const Text("Logo"),
-              ),
-            ),
+            _item(context, Icons.home, "Home", () {}),
 
-            const SizedBox(height: 30),
-
-            // HOME
-            _botaoPrincipal(context, "Home", () {}),
-
-            // CLIENTES (expansível)
-            ExpansionTile(
-              iconColor: Colors.white,
-              collapsedIconColor: Colors.white,
-              title: _tituloPrincipal("Clientes"),
-              children: [
-                _subItem(context, "Cadastro de cliente", () {}),
-                _subItem(context, "Listagem de cliente", () {}),
+            _expansivel(
+              context,
+              "Clientes",
+              Icons.people,
+              [
+                "Cadastro de cliente",
+                "Listagem de cliente",
               ],
             ),
 
-            
-            ExpansionTile(
-              iconColor: Colors.white,
-              collapsedIconColor: Colors.white,
-              title: _tituloPrincipal("Animais"),
-              children: [
-                _subItem(context, "Cadastro de animais", () {}),
-                _subItem(context, "Listagem de animais", () {}),
+            _expansivel(
+              context,
+              "Animais",
+              Icons.pets,
+              [
+                "Cadastro de animais",
+                "Listagem de animais",
               ],
             ),
 
             const Spacer(),
 
-            // LOGOUT
-            _botaoPrincipal(context, "Logout", () {}),
+            _item(context, Icons.logout, "Logout", () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) =>const LoginPage()),
+                (route) => false,
+                );
+            }),
 
             const SizedBox(height: 20),
           ],
@@ -65,63 +52,89 @@ class MenuLateral extends StatelessWidget {
     );
   }
 
-  Widget _botaoPrincipal(
-    BuildContext context,
-    String title,
-    VoidCallback onTap,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context);
-            onTap();
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.grey[300],
-          ),
-          child: Text(title, style: const TextStyle(color: Colors.black)),
-        ),
-      ),
-    );
-  }
-
-  Widget _tituloPrincipal(String title) {
+  Widget _header() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-      decoration: BoxDecoration(
-        color: Colors.grey[300],
-        borderRadius: BorderRadius.circular(6),
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: const BoxDecoration(
+        color: Color(0xFF1FAA59),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(20),
+          bottomRight: Radius.circular(20),
+        ),
       ),
-      child: Text(
-        title,
-        style: const TextStyle(color: Colors.black),
+      child: Row(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+            ),
+            alignment: Alignment.center,
+            child: const Text("Logo"),
+          ),
+          const SizedBox(width: 12),
+          const Text(
+            "Sistema",
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          )
+        ],
       ),
     );
   }
 
-  Widget _subItem(
+  Widget _item(
     BuildContext context,
+    IconData icon,
     String title,
     VoidCallback onTap,
   ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 5),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context);
-            onTap();
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.grey[400],
-          ),
-          child: Text(title, style: const TextStyle(color: Colors.black)),
-        ),
+    return ListTile(
+      leading: Icon(icon, color: Colors.white),
+      title: Text(
+        title,
+        style: const TextStyle(color: Colors.white),
       ),
+      onTap: () {
+        Navigator.pop(context); // fecha o drawer
+        Future.microtask(onTap); // evita bug de navegação
+      },
+    );
+  }
+
+  Widget _expansivel(
+    BuildContext context,
+    String titulo,
+    IconData icon,
+    List<String> itens,
+  ) {
+    return ExpansionTile(
+      collapsedIconColor: Colors.white,
+      iconColor: Colors.white,
+      leading: Icon(icon, color: Colors.white),
+      title: Text(
+        titulo,
+        style: const TextStyle(color: Colors.white),
+      ),
+      children: itens.map((texto) {
+        return ListTile(
+          title: Text(
+            texto,
+            style: const TextStyle(color: Colors.white70),
+          ),
+          onTap: () {
+            Navigator.pop(context);
+
+            // depois liga navegação
+          },
+        );
+      }).toList(),
     );
   }
 }

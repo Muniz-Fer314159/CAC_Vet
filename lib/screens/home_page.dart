@@ -8,116 +8,119 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MainLayout(
       child: Container(
-        width: double.infinity,
-        color: const Color(0xFF00A000), // verde claro do layout
+        color: const Color(0xFF0D3B0D), // verde escuro
         child: Column(
           children: [
-            const SizedBox(height: 20),
-
             _topo(),
-
             const SizedBox(height: 30),
-
-            // MENU PRINCIPAL
-            _menuPrincipal(),
-
-            const Spacer(),
+            Expanded(child: _menuPrincipal()),
           ],
         ),
       ),
     );
   }
 
+  // 🔹 TOPO ESTILIZADO
   Widget _topo() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      decoration: const BoxDecoration(
+        color: Color(0xFF1FAA59), // verde mais claro
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(20),
+          bottomRight: Radius.circular(20),
+        ),
+      ),
       child: Row(
         children: [
           Container(
-            width: 70,
-            height: 70,
+            width: 65,
+            height: 65,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.grey,
+              color: Colors.white,
             ),
             alignment: Alignment.center,
-            child: const Text("Logo"),
+            child: const Text(
+              "Logo",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
-
-          const SizedBox(width: 20),
-
+          const SizedBox(width: 15),
           const Text(
-            "Slogan",
+            "Slogan do Sistema",
             style: TextStyle(
               fontSize: 20,
-              color: Colors.white,
               fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
+          )
+        ],
+      ),
+    );
+  }
+
+  // 🔹 MENU PRINCIPAL
+  Widget _menuPrincipal() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        children: [
+          _cardExpansivel(
+            titulo: "Clientes",
+            icone: Icons.people,
+            itens: ["Cadastro de cliente", "Listagem de cliente"],
+          ),
+          const SizedBox(height: 20),
+          _cardExpansivel(
+            titulo: "Animais",
+            icone: Icons.pets,
+            itens: ["Cadastro de animais", "Listagem de animais"],
           ),
         ],
       ),
     );
   }
 
-  // 🔹 MENU PRINCIPAL (Clientes / Animais)
-  Widget _menuPrincipal() {
-    return Column(
-      children: [
-        ExpansionTile(
-          iconColor: Colors.white,
-          collapsedIconColor: Colors.white,
-          leading: const CircleAvatar(
-            radius: 8,
-            backgroundColor: Colors.grey,
-          ),
-          title: _botaoPrincipal("Clientes"),
-          children: [
-            _subItem("Cadastro de cliente"),
-            _subItem("Listagem de cliente"),
-          ],
-        ),
-
-        // ANIMAIS
-        ExpansionTile(
-          iconColor: Colors.white,
-          collapsedIconColor: Colors.white,
-          leading: const CircleAvatar(
-            radius: 8,
-            backgroundColor: Colors.grey,
-          ),
-          title: _botaoPrincipal("Animais"),
-          children: [
-            _subItem("Cadastro de animais"),
-            _subItem("Listagem de animais"),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _botaoPrincipal(String texto) {
+  // 🔹 CARD EXPANSÍVEL (ESTILO MODERNO)
+  Widget _cardExpansivel({
+    required String titulo,
+    required IconData icone,
+    required List<String> itens,
+  }) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
       decoration: BoxDecoration(
-        color: Colors.grey[300],
-        borderRadius: BorderRadius.circular(6),
+        color: const Color(0xFF145214),
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: Text(
-        texto,
-        style: const TextStyle(color: Colors.black),
+      child: ExpansionTile(
+        collapsedIconColor: Colors.white,
+        iconColor: Colors.white,
+        leading: Icon(icone, color: Colors.white),
+        title: Text(
+          titulo,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        children: itens.map((item) => _subItem(item)).toList(),
       ),
     );
   }
 
+  // 🔹 SUBITEM
   Widget _subItem(String texto) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
       child: Container(
-        width: 220,
-        padding: const EdgeInsets.all(10),
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.grey[300],
-          borderRadius: BorderRadius.circular(6),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Text(texto),
       ),
