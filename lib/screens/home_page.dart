@@ -61,7 +61,6 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  // 🔹 MENU PRINCIPAL
   Widget _menuPrincipal() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -83,7 +82,6 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  // 🔹 CARD EXPANSÍVEL (ESTILO MODERNO)
   Widget _cardExpansivel({
     required String titulo,
     required IconData icone,

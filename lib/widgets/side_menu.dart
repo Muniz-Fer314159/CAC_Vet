@@ -1,3 +1,4 @@
+import 'package:anchieta_flutter_todo/screens/home_page.dart';
 import 'package:anchieta_flutter_todo/screens/login_page.dart';
 import 'package:flutter/material.dart';
 
@@ -13,7 +14,12 @@ class MenuLateral extends StatelessWidget {
           children: [
             _header(),
 
-            _item(context, Icons.home, "Home", () {}),
+            _item(context, Icons.home, "Home", () {
+              Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => HomePage())
+              );
+            }),
 
             _expansivel(
               context,
