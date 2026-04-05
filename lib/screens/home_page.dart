@@ -1,3 +1,5 @@
+import 'package:anchieta_flutter_todo/screens/cadastro_ani_page.dart';
+import 'package:anchieta_flutter_todo/screens/cadastro_cli_page.dart';
 import 'package:flutter/material.dart';
 import '../widgets/main_layout.dart';
 
@@ -13,7 +15,7 @@ class HomePage extends StatelessWidget {
           children: [
             _topo(),
             const SizedBox(height: 30),
-            Expanded(child: _menuPrincipal()),
+            Expanded(child: _menuPrincipal(context)),
           ],
         ),
       ),
@@ -61,18 +63,20 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _menuPrincipal() {
+  Widget _menuPrincipal(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
           _cardExpansivel(
+            context: context,
             titulo: "Clientes",
             icone: Icons.people,
             itens: ["Cadastro de cliente", "Listagem de cliente"],
           ),
           const SizedBox(height: 20),
           _cardExpansivel(
+            context: context,
             titulo: "Animais",
             icone: Icons.pets,
             itens: ["Cadastro de animais", "Listagem de animais"],
@@ -83,6 +87,7 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _cardExpansivel({
+    required BuildContext context,
     required String titulo,
     required IconData icone,
     required List<String> itens,
@@ -104,23 +109,44 @@ class HomePage extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        children: itens.map((item) => _subItem(item)).toList(),
+        children: itens.map((item) => _subItem(context, item)).toList(),
       ),
     );
   }
 
   // 🔹 SUBITEM
-  Widget _subItem(String texto) {
+  Widget _subItem(BuildContext context, String texto) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
+      child: GestureDetector(
+        onTap: () {
+          if (texto == "Cadastro de cliente") {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const CadastroClientePage(),
+              ),
+            );
+          }
+
+          if (texto == "Cadastro de animais") {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const CadastroAnimalPage(),
+              ),
+            );
+          }
+        },
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(texto),
         ),
-        child: Text(texto),
       ),
     );
   }
