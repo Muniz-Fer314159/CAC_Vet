@@ -1,3 +1,5 @@
+import 'listagem_cli_page.dart';
+import 'listagem_ani_page.dart';
 import 'package:anchieta_flutter_todo/screens/cadastro_ani_page.dart';
 import 'package:anchieta_flutter_todo/screens/cadastro_cli_page.dart';
 import 'package:flutter/material.dart';
@@ -137,6 +139,25 @@ class HomePage extends StatelessWidget {
               ),
             );
           }
+
+          if (texto == "Listagem de cliente") {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const ListagemClientePage(),
+              ),
+            );
+          }
+
+          if (texto == "Listagem de animais") {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const ListagemAnimalPage(),
+              ),
+            );
+          }
+
         },
         child: Container(
           width: double.infinity,
