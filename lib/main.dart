@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'screens/login_page.dart';
+import 'screens/cadastro_page.dart';
+import 'screens/cadastro_cliente_page.dart';
+import 'screens/cadastro_animal_page.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -10,9 +14,19 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: LoginPage(),
+      title: 'Sistema Pet Shop',
+      theme: ThemeData(
+        primarySwatch: Colors.green,
+      ),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const LoginPage(),
+        '/cadastroUsuario': (context) => const CadastroPage(),
+        '/cadastroCliente': (context) => const CadastroClientePage(),
+        '/cadastroAnimal': (context) => const CadastroAnimalPage(),
+      },
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/input_field.dart';
+import '../database/database_helper.dart';
 
 class CadastroPage extends StatefulWidget {
   const CadastroPage({super.key});
@@ -11,13 +12,32 @@ class CadastroPage extends StatefulWidget {
 class _CadastroPageState extends State<CadastroPage> {
   final _formKey = GlobalKey<FormState>();
 
-  void _cadastrar() {
+  final loginController = TextEditingController();
+  final senhaController = TextEditingController();
+
+  Future<void> _cadastrar() async {
     if (_formKey.currentState!.validate()) {
+      await DatabaseHelper.instance.inserirUsuario({
+        'login': loginController.text,
+        'senha': senhaController.text,
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Cadastro realizado!')),
       );
+
+      loginController.clear();
+      senhaController.clear();
+
       Navigator.pop(context);
     }
+  }
+
+  @override
+  void dispose() {
+    loginController.dispose();
+    senhaController.dispose();
+    super.dispose();
   }
 
   @override
@@ -36,7 +56,7 @@ class _CadastroPageState extends State<CadastroPage> {
               alignment: Alignment.topCenter,
               children: [
                 _logo(),
-
+                
                 Positioned(
                   top: 150,
                   left: 30,
@@ -84,6 +104,7 @@ class _CadastroPageState extends State<CadastroPage> {
           const SizedBox(height: 8),
 
           InputField(
+            controller: loginController,
             validator: (v) =>
                 v == null || v.isEmpty ? "Digite o login" : null,
           ),
@@ -94,6 +115,7 @@ class _CadastroPageState extends State<CadastroPage> {
           const SizedBox(height: 8),
 
           InputField(
+            controller: senhaController,
             obscure: true,
             validator: (v) =>
                 v == null || v.length < 4 ? "Senha inválida" : null,
