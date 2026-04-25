@@ -22,6 +22,8 @@ class _CadastroPageState extends State<CadastroPage> {
         'senha': senhaController.text,
       });
 
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Cadastro realizado!')),
       );

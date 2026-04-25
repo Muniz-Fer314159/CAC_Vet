@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'screens/login_page.dart';
 import 'screens/cadastro_page.dart';
-import 'screens/cadastro_cliente_page.dart';
-import 'screens/cadastro_animal_page.dart';
+import 'screens/cadastro_cli_page.dart';
+import 'screens/cadastro_ani_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

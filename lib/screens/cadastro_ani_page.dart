@@ -24,6 +24,8 @@ class _CadastroAnimalPageState extends State<CadastroAnimalPage> {
       'nome_dono': donoController.text,
     });
 
+    if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Animal salvo com sucesso!")),
     );

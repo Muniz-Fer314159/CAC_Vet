@@ -24,6 +24,8 @@ class _CadastroClientePageState extends State<CadastroClientePage> {
       'cpf': cpfController.text,
     });
 
+    if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Cliente salvo com sucesso!")),
     );
