@@ -61,11 +61,61 @@ class DatabaseHelper {
     final db = await instance.database;
     return await db.insert('clientes', cliente);
   }
+  Future<List<Map<String, dynamic>>> obterClientes() async {
+    final db = await instance.database;
+    return await db.query('clientes');
+  }
+
+  Future<int> atualizarCliente(Map<String, dynamic> cliente) async {
+  final db = await instance.database;
+
+  return await db.update(
+    'clientes',
+    cliente,
+    where: 'id = ?',
+    whereArgs: [cliente['id']],
+  );
+}
+
+Future<int> deletarCliente(int id) async {
+  final db = await instance.database;
+
+  return await db.delete(
+    'clientes',
+    where: 'id = ?',
+    whereArgs: [id],
+  );
+}
+  Future<List<Map<String, dynamic>>> obterAnimais() async {
+    final db = await instance.database;
+    return await db.query('animais');
+  }
 
   Future<int> inserirAnimal(Map<String, dynamic> animal) async {
     final db = await instance.database;
     return await db.insert('animais', animal);
   }
+
+  Future<int> atualizarAnimal(Map<String, dynamic> animal) async {
+  final db = await instance.database;
+
+  return await db.update(
+    'animais',
+    animal,
+    where: 'id = ?',
+    whereArgs: [animal['id']],
+  );
+}
+
+Future<int> deletarAnimal(int id) async {
+  final db = await instance.database;
+
+  return await db.delete(
+    'animais',
+    where: 'id = ?',
+    whereArgs: [id],
+  );
+}
 
   Future<int> inserirUsuario(Map<String, dynamic> usuario) async {
     final db = await instance.database;

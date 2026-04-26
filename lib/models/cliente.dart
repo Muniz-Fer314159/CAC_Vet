@@ -25,4 +25,15 @@ class Cliente {
       'cpf': cpf,
     };
   }
+
+    factory Cliente.fromMap(Map<String, dynamic> map) {
+      return Cliente(
+        id: map['id'],
+        nome: map['nome'],
+        telefone: map['telefone'],
+        email: map['email'],
+        endereco: map['endereco'],
+        cpf: map['cpf'],
+   );
+  }
 }

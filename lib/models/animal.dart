@@ -1,3 +1,4 @@
+
 class Animal {
   int? id;
   String nome;
@@ -24,5 +25,16 @@ class Animal {
       'idade': idade,
       'nome_dono': nomeDono,
     };
+  }
+
+  factory Animal.fromMap(Map<String, dynamic> map) {
+    return Animal(
+      id: map['id'],
+      nome: map['nome'],
+      especie: map['especie'],
+      raca: map['raca'],
+      idade: map['idade'],
+      nomeDono: map['nome_dono'],
+    );
   }
 }
