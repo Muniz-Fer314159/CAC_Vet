@@ -2,6 +2,7 @@ import 'package:anchieta_flutter_todo/screens/home_page.dart';
 import 'package:flutter/material.dart';
 import 'cadastro_page.dart';
 import '../widgets/input_field.dart';
+import '../services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,20 +13,49 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
+  final _loginController = TextEditingController();
+  final _senhaController = TextEditingController();
+  final _authService = AuthService();
+  bool _carregando = false;
 
-  void _login() {
-    if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login válido!')),
+  @override
+  void dispose() {
+    _loginController.dispose();
+    _senhaController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _login() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _carregando = true);
+
+    try {
+      await _authService.login(
+        _loginController.text.trim(),
+        _senhaController.text.trim(),
       );
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const HomePage())
-    );
+      if (!mounted) return;
 
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Login realizado com sucesso!')),
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomePage()),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _carregando = false);
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -42,7 +72,6 @@ class _LoginPageState extends State<LoginPage> {
               alignment: Alignment.topCenter,
               children: [
                 _logo(),
-
                 Positioned(
                   top: 150,
                   left: 30,
@@ -71,7 +100,7 @@ class _LoginPageState extends State<LoginPage> {
           color: Colors.grey,
         ),
         alignment: Alignment.center,
-        child: const Text("Logo"),
+        child: const Text('Logo'),
       ),
     );
   }
@@ -86,32 +115,35 @@ class _LoginPageState extends State<LoginPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Login", style: TextStyle(color: Colors.white)),
+          const Text('Login', style: TextStyle(color: Colors.white)),
           const SizedBox(height: 8),
 
           InputField(
-            validator: (v) =>
-                v == null || v.isEmpty ? "Digite o login" : null,
+            controller: _loginController,
+            validator: (v) => v == null || v.isEmpty ? 'Digite o login' : null,
           ),
 
           const SizedBox(height: 16),
 
-          const Text("Senha", style: TextStyle(color: Colors.white)),
+          const Text('Senha', style: TextStyle(color: Colors.white)),
           const SizedBox(height: 8),
 
           InputField(
+            controller: _senhaController,
             obscure: true,
             validator: (v) =>
-                v == null || v.length < 4 ? "Senha inválida" : null,
+                v == null || v.length < 4 ? 'Senha inválida' : null,
           ),
 
           const SizedBox(height: 20),
 
           Center(
-            child: ElevatedButton(
-              onPressed: _login,
-              child: const Text("Entrar"),
-            ),
+            child: _carregando
+                ? const CircularProgressIndicator(color: Colors.white)
+                : ElevatedButton(
+                    onPressed: _login,
+                    child: const Text('Entrar'),
+                  ),
           ),
 
           const SizedBox(height: 10),
@@ -121,13 +153,11 @@ class _LoginPageState extends State<LoginPage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const CadastroPage(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const CadastroPage()),
                 );
               },
               child: const Text(
-                "Cadastre-se",
+                'Cadastre-se',
                 style: TextStyle(color: Colors.white),
               ),
             ),
