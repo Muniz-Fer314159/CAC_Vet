@@ -32,9 +32,9 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       await _authService.login(
-        _loginController.text.trim(),
-        _senhaController.text.trim(),
-      );
+  username: _loginController.text.trim(),
+  password: _senhaController.text.trim(),
+);
 
       if (!mounted) return;
 

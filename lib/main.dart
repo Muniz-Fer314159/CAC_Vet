@@ -3,9 +3,17 @@ import 'screens/login_page.dart';
 import 'screens/cadastro_page.dart';
 import 'screens/cadastro_cli_page.dart';
 import 'screens/cadastro_ani_page.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'dart:io';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
+
   runApp(const MyApp());
 }
 

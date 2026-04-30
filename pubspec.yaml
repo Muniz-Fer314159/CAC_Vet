@@ -10,8 +10,10 @@ dependencies:
   flutter:
     sdk: flutter
   sqflite: ^2.3.3
+  sqflite_common_ffi: ^2.3.0
   path: ^1.9.0
-  shared_preferences: ^2.3.2   # <-- adicionado para salvar o token JWT
+  shared_preferences: ^2.3.2
+  http: ^1.1.0
 
 dev_dependencies:
   flutter_test:

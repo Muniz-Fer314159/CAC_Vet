@@ -1,89 +1,92 @@
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../models/auth_model.dart';
+import 'package:http/http.dart' as http;
 
 class AuthService {
-  // Chave usada para salvar o token no SharedPreferences
-  static const _tokenKey = 'auth_token';
+  static const String _authBaseUrl = 'https://mobile-ios-login.zani0x03.eti.br/api';
+  static const String _iaBaseUrl = 'https://mobile-ios-ia.zani0x03.eti.br/api';
+  
+  static const String _sistemaId = 'e29f685c-ffd3-4adb-97cc-cf6bb652ed12';
 
-  // ─────────────────────────────────────────────
-  // MOCK: usuários válidos (substitua pela API real do professor depois)
-  // ─────────────────────────────────────────────
-  static const _mockUsers = [
-    {'login': 'admin', 'senha': '1234'},
-    {'login': 'usuario', 'senha': '1234'},
-  ];
-
-  // ─────────────────────────────────────────────
-  // Gera um JWT falso (apenas para mock)
-  // Quando usar a API real do professor, este método some —
-  // o token virá direto da resposta HTTP.
-  // ─────────────────────────────────────────────
-  static String _gerarTokenMock(String login) {
-    // Header e payload em Base64 (não é criptografado — só mock!)
-    final header = base64Url.encode(utf8.encode('{"alg":"HS256","typ":"JWT"}'));
-    final payload = base64Url.encode(
-      utf8.encode('{"sub":"$login","iat":${DateTime.now().millisecondsSinceEpoch ~/ 1000}}'),
+  Future<Map<String, dynamic>> register({
+    required String name,
+    required String surname,
+    required String login,
+    required String email,
+    required String password,
+  }) async {
+    final url = Uri.parse('$_authBaseUrl/register');
+    
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'name': name,
+        'surname': surname,
+        'login': login,
+        'email': email,
+        'password': password,
+        'sistemaId': _sistemaId,
+      }),
     );
-    const signature = 'assinatura_mock'; // mock — não use em produção!
-    return '$header.$payload.$signature';
+
+    return _handleResponse(response);
   }
 
-  // ─────────────────────────────────────────────
-  // Login: valida credenciais e salva o token
-  // Retorna AuthResponse em caso de sucesso,
-  // lança Exception em caso de erro.
-  // ─────────────────────────────────────────────
-  Future<AuthResponse> login(String login, String senha) async {
-    // Simula delay de rede (retire ao usar API real)
-    await Future.delayed(const Duration(milliseconds: 600));
-
-    final usuarioValido = _mockUsers.any(
-      (u) => u['login'] == login && u['senha'] == senha,
+  Future<Map<String, dynamic>> login({
+    required String username,
+    required String password,
+  }) async {
+    final url = Uri.parse('$_authBaseUrl/auth/login');
+    
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'username': username,
+        'password': password,
+        'sistemaId': _sistemaId,
+      }),
     );
 
-    if (!usuarioValido) {
-      throw Exception('Login ou senha inválidos.');
+    return _handleResponse(response);
+  }
+
+  Future<Map<String, dynamic>> chatIA({
+    required String prompt,
+    required String token,
+  }) async {
+    final url = Uri.parse('$_iaBaseUrl/ai/chat');
+
+    const String prePrompt = '''
+Você é um assistente virtual especializado para funcionários de uma clínica veterinária. 
+Seu objetivo é ajudar com dúvidas sobre rotinas da clínica, triagem de pacientes, cuidados básicos com animais, medicamentos e protocolos internos. 
+Responda de forma profissional, objetiva e empática. 
+Pergunta do funcionário: ''';
+
+    final String finalPrompt = '$prePrompt$prompt';
+    
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'prompt': finalPrompt,
+      }),
+    );
+
+    return _handleResponse(response);
+  }
+
+  Map<String, dynamic> _handleResponse(http.Response response) {
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (response.body.isNotEmpty) {
+        return jsonDecode(response.body);
+      }
+      return {}; 
+    } else {
+      throw Exception('Erro na requisição: ${response.statusCode} - ${response.body}');
     }
-
-    final token = _gerarTokenMock(login);
-    final response = AuthResponse(token: token, login: login);
-
-    // Salva o token localmente
-    await _salvarToken(token);
-
-    return response;
-  }
-
-  // ─────────────────────────────────────────────
-  // Salva o token no SharedPreferences
-  // ─────────────────────────────────────────────
-  Future<void> _salvarToken(String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_tokenKey, token);
-  }
-
-  // ─────────────────────────────────────────────
-  // Recupera o token salvo (útil para requisições futuras)
-  // ─────────────────────────────────────────────
-  Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_tokenKey);
-  }
-
-  // ─────────────────────────────────────────────
-  // Logout: remove o token salvo
-  // ─────────────────────────────────────────────
-  Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_tokenKey);
-  }
-
-  // ─────────────────────────────────────────────
-  // Verifica se o usuário está logado
-  // ─────────────────────────────────────────────
-  Future<bool> isLogado() async {
-    final token = await getToken();
-    return token != null && token.isNotEmpty;
   }
 }
