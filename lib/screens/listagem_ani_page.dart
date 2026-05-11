@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../constants/app_theme.dart';
+import '../database/database_helper.dart';
+import '../models/animal.dart';
+import '../widgets/main_layout.dart';
+import 'cadastro_ani_page.dart';
+
 class ListagemAnimalPage extends StatefulWidget {
-  const ListagemAnimalPage({super.key});
+  final String? mensagemSucesso;
+
+  const ListagemAnimalPage({super.key, this.mensagemSucesso});
 
   @override
   State<ListagemAnimalPage> createState() => _ListagemAnimalPageState();
@@ -10,228 +18,337 @@ class ListagemAnimalPage extends StatefulWidget {
 class _ListagemAnimalPageState extends State<ListagemAnimalPage> {
   final TextEditingController _buscaController = TextEditingController();
 
-  final List<Map<String, String>> _animais = [
-    {
-      'nome': 'Rex',
-      'especie': 'Cachorro',
-      'raca': 'Labrador',
-      'idade': '3 anos',
-      'dono': 'João Silva',
-    },
-    {
-      'nome': 'Mia',
-      'especie': 'Gato',
-      'raca': 'Persa',
-      'idade': '2 anos',
-      'dono': 'Maria Souza',
-    },
-    {
-      'nome': 'Bolinha',
-      'especie': 'Cachorro',
-      'raca': 'Poodle',
-      'idade': '5 anos',
-      'dono': 'Carlos Lima',
-    },
-    {
-      'nome': 'Nina',
-      'especie': 'Gato',
-      'raca': 'Siamês',
-      'idade': '1 ano',
-      'dono': 'Ana Paula',
-    },
-    {
-      'nome': 'Thor',
-      'especie': 'Cachorro',
-      'raca': 'Pastor Alemão',
-      'idade': '4 anos',
-      'dono': 'Roberto Ferreira',
-    },
-  ];
-
-  List<Map<String, String>> _animaisFiltrados = [];
+  List<Animal> _animais = [];
+  List<Animal> _animaisFiltrados = [];
+  bool _carregando = true;
 
   @override
   void initState() {
     super.initState();
-    _animaisFiltrados = List.from(_animais);
+    _carregarAnimais();
+
+    if (widget.mensagemSucesso != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _mostrarSnack(widget.mensagemSucesso!);
+      });
+    }
+  }
+
+  Future<void> _carregarAnimais() async {
+    final registros = await DatabaseHelper.instance.obterAnimais();
+    final animais = registros.map(Animal.fromMap).toList();
+
+    if (!mounted) return;
+
+    setState(() {
+      _animais = animais;
+      _aplicarFiltro(_buscaController.text);
+      _carregando = false;
+    });
+  }
+
+  void _aplicarFiltro(String texto) {
+    final termo = texto.trim().toLowerCase();
+
+    _animaisFiltrados = _animais.where((animal) {
+      if (termo.isEmpty) return true;
+
+      return animal.nome.toLowerCase().contains(termo) ||
+          animal.especie.toLowerCase().contains(termo) ||
+          animal.nomeDono.toLowerCase().contains(termo);
+    }).toList();
   }
 
   void _filtrar(String texto) {
     setState(() {
-      _animaisFiltrados = _animais
-          .where((a) =>
-              a['nome']!.toLowerCase().contains(texto.toLowerCase()) ||
-              a['dono']!.toLowerCase().contains(texto.toLowerCase()) ||
-              a['especie']!.toLowerCase().contains(texto.toLowerCase()))
-          .toList();
+      _aplicarFiltro(texto);
     });
   }
 
-  IconData _iconeEspecie(String especie) {
-    switch (especie.toLowerCase()) {
-      case 'cachorro':
-        return Icons.pets;
-      case 'gato':
-        return Icons.catching_pokemon;
-      default:
-        return Icons.cruelty_free;
+  Future<void> _abrirCadastro({Animal? animal}) async {
+    final mensagem = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CadastroAnimalPage(
+          animal: animal,
+          redirecionarParaListagemAoSalvar: false,
+        ),
+      ),
+    );
+
+    if (mensagem == null) return;
+
+    await _carregarAnimais();
+    if (!mounted) return;
+    _mostrarSnack(mensagem);
+  }
+
+  Future<void> _excluirAnimal(Animal animal) async {
+    final confirmou = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Excluir animal'),
+            content: Text('Deseja excluir ${animal.nome}?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancelar'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text(
+                  'Excluir',
+                  style: TextStyle(color: AppColors.error),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!confirmou || animal.id == null) return;
+
+    await DatabaseHelper.instance.deletarAnimal(animal.id!);
+    await _carregarAnimais();
+
+    if (!mounted) return;
+    _mostrarSnack('Animal excluido com sucesso!');
+  }
+
+  IconData _getEspecieIcon(String especie) {
+    final especieNormalizada = especie.toLowerCase();
+
+    if (especieNormalizada.contains('pass')) {
+      return Icons.flutter_dash;
     }
+
+    if (especieNormalizada.contains('coelho')) {
+      return Icons.cruelty_free;
+    }
+
+    return Icons.pets;
+  }
+
+  void _mostrarSnack(String mensagem) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensagem),
+        backgroundColor: AppColors.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: AppShapes.buttonRadius),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _buscaController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        color: const Color(0xFF0D3B0D),
-        child: Column(
-          children: [
-            _topo(context, "Listagem de animais"),
-            const SizedBox(height: 20),
-            _campoBusca(),
-            const SizedBox(height: 10),
-            Expanded(child: _lista()),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _topo(BuildContext context, String titulo) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
-      decoration: const BoxDecoration(
-        color: Color(0xFF1FAA59),
-      ),
-      child: Row(
+    return MainLayout(
+      title: 'Animais',
+      child: Column(
         children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
-          ),
-          const SizedBox(width: 15),
-          Container(
-            width: 70,
-            height: 70,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.grey,
-            ),
-          ),
-          const SizedBox(width: 15),
-          Text(
-            titulo,
-            style: const TextStyle(
-              fontSize: 22,
-              color: Colors.white,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _campoBusca() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 25),
-      child: TextField(
-        controller: _buscaController,
-        onChanged: _filtrar,
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: Colors.grey[300],
-          hintText: 'Buscar por nome, espécie ou dono...',
-          prefixIcon: const Icon(Icons.search),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide.none,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _lista() {
-    if (_animaisFiltrados.isEmpty) {
-      return const Center(
-        child: Text(
-          'Nenhum animal encontrado.',
-          style: TextStyle(color: Colors.white70),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 5),
-      itemCount: _animaisFiltrados.length,
-      itemBuilder: (context, index) {
-        return _card(_animaisFiltrados[index]);
-      },
-    );
-  }
-
-  Widget _card(Map<String, String> animal) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CircleAvatar(
-              backgroundColor: const Color(0xFF1FAA59),
-              radius: 24,
-              child: Icon(
-                _iconeEspecie(animal['especie']!),
-                color: Colors.white,
-                size: 22,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    animal['nome']!,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _buscaController,
+                  onChanged: _filtrar,
+                  decoration: InputDecoration(
+                    hintText: 'Buscar por nome, especie ou dono...',
+                    prefixIcon: const Icon(Icons.search),
+                    filled: true,
+                    fillColor: AppColors.surface,
+                    border: OutlineInputBorder(
+                      borderRadius: AppShapes.inputRadius,
+                      borderSide: BorderSide(
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: AppShapes.inputRadius,
+                      borderSide: BorderSide(
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: AppShapes.inputRadius,
+                      borderSide: const BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  _infoLinha(Icons.category, animal['especie']!),
-                  _infoLinha(Icons.style, animal['raca']!),
-                  _infoLinha(Icons.cake, animal['idade']!),
-                  _infoLinha(Icons.person, animal['dono']!),
-                ],
-              ),
+                ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _abrirCadastro(),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Novo animal'),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          Expanded(
+            child: _carregando
+                ? const Center(child: CircularProgressIndicator())
+                : _animaisFiltrados.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.pets_outlined,
+                              size: 64,
+                              color: AppColors.primary.withValues(alpha: 0.3),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Nenhum animal encontrado',
+                              style: AppTextStyles.body.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        itemCount: _animaisFiltrados.length,
+                        itemBuilder: (context, index) {
+                          final animal = _animaisFiltrados[index];
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: AppShapes.cardRadius,
+                                boxShadow: [AppShapes.cardShadow],
+                                border: Border.all(
+                                  color: AppColors.accent.withValues(alpha: 0.1),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.accent.withValues(
+                                              alpha: 0.1,
+                                            ),
+                                            borderRadius: AppShapes.buttonRadius,
+                                          ),
+                                          child: Icon(
+                                            _getEspecieIcon(animal.especie),
+                                            color: AppColors.accent,
+                                            size: 24,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                animal.nome,
+                                                style: AppTextStyles.heading3,
+                                              ),
+                                              Text(
+                                                animal.raca.isEmpty
+                                                    ? animal.especie
+                                                    : animal.raca,
+                                                style: AppTextStyles.caption,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        IconButton(
+                                          tooltip: 'Editar',
+                                          onPressed: () =>
+                                              _abrirCadastro(animal: animal),
+                                          icon: const Icon(Icons.edit_outlined),
+                                        ),
+                                        IconButton(
+                                          tooltip: 'Excluir',
+                                          onPressed: () => _excluirAnimal(animal),
+                                          icon: const Icon(
+                                            Icons.delete_outline,
+                                            color: AppColors.error,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    _buildInfoRow(
+                                      Icons.category,
+                                      'Especie',
+                                      animal.especie,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _buildInfoRow(
+                                      Icons.calendar_today,
+                                      'Idade',
+                                      '${animal.idade} ano${animal.idade == 1 ? '' : 's'}',
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _buildInfoRow(
+                                      Icons.person,
+                                      'Dono',
+                                      animal.nomeDono,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _infoLinha(IconData icone, String texto) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: Row(
-        children: [
-          Icon(icone, size: 14, color: const Color(0xFF1FAA59)),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              texto,
-              style: const TextStyle(fontSize: 13, color: Colors.black87),
-            ),
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: AppColors.accent),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: AppTextStyles.caption,
+              ),
+              Text(
+                value.isEmpty ? '-' : value,
+                style: AppTextStyles.body,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

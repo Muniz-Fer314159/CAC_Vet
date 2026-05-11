@@ -1,4 +1,3 @@
-
 class Animal {
   int? id;
   String nome;
@@ -29,12 +28,12 @@ class Animal {
 
   factory Animal.fromMap(Map<String, dynamic> map) {
     return Animal(
-      id: map['id'],
-      nome: map['nome'],
-      especie: map['especie'],
-      raca: map['raca'],
-      idade: map['idade'],
-      nomeDono: map['nome_dono'],
+      id: map['id'] as int?,
+      nome: map['nome']?.toString() ?? '',
+      especie: map['especie']?.toString() ?? '',
+      raca: map['raca']?.toString() ?? '',
+      idade: (map['idade'] as num?)?.toInt() ?? 0,
+      nomeDono: map['nome_dono']?.toString() ?? '',
     );
   }
 }

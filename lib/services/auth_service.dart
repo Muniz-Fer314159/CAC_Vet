@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../database/database_helper.dart';
 
 class AuthService {
   static const String _authBaseUrl = 'https://mobile-ios-login.zani0x03.eti.br/api';
@@ -36,19 +37,38 @@ class AuthService {
     required String username,
     required String password,
   }) async {
-    final url = Uri.parse('$_authBaseUrl/auth/login');
-    
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'username': username,
-        'password': password,
-        'sistemaId': _sistemaId,
-      }),
-    );
+    // Primeiro tenta login na API externa
+    try {
+      final url = Uri.parse('$_authBaseUrl/auth/login');
+      
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'username': username,
+          'password': password,
+          'sistemaId': _sistemaId,
+        }),
+      );
 
-    return _handleResponse(response);
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return _handleResponse(response);
+      }
+    } catch (e) {
+      // Se falhar a API, tenta login local
+    }
+
+    // Fallback: tenta login local
+    final user = await DatabaseHelper.instance.obterUsuario(username, password);
+    if (user != null) {
+      return {
+        'token': 'local_${user['id']}_${DateTime.now().millisecondsSinceEpoch}',
+        'login': user['login'],
+        'local': true,
+      };
+    }
+
+    throw Exception('Credenciais inválidas');
   }
 
   Future<Map<String, dynamic>> chatIA({

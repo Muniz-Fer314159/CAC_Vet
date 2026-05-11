@@ -1,36 +1,86 @@
 import 'package:flutter/material.dart';
+
+import '../constants/app_theme.dart';
 import '../database/database_helper.dart';
+import '../models/cliente.dart';
+import '../widgets/input_field.dart';
+import '../widgets/main_layout.dart';
+import 'listagem_cli_page.dart';
 
 class CadastroClientePage extends StatefulWidget {
-  const CadastroClientePage({super.key});
+  final Cliente? cliente;
+  final bool redirecionarParaListagemAoSalvar;
+
+  const CadastroClientePage({
+    super.key,
+    this.cliente,
+    this.redirecionarParaListagemAoSalvar = true,
+  });
 
   @override
   State<CadastroClientePage> createState() => _CadastroClientePageState();
 }
 
 class _CadastroClientePageState extends State<CadastroClientePage> {
+  final _formKey = GlobalKey<FormState>();
   final nomeController = TextEditingController();
   final telefoneController = TextEditingController();
   final emailController = TextEditingController();
   final enderecoController = TextEditingController();
   final cpfController = TextEditingController();
 
+  bool get _emEdicao => widget.cliente != null;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final cliente = widget.cliente;
+    if (cliente == null) return;
+
+    nomeController.text = cliente.nome;
+    telefoneController.text = cliente.telefone;
+    emailController.text = cliente.email;
+    enderecoController.text = cliente.endereco;
+    cpfController.text = cliente.cpf;
+  }
+
   Future<void> salvarCliente() async {
-    await DatabaseHelper.instance.inserirCliente({
-      'nome': nomeController.text,
-      'telefone': telefoneController.text,
-      'email': emailController.text,
-      'endereco': enderecoController.text,
-      'cpf': cpfController.text,
-    });
+    if (!_formKey.currentState!.validate()) return;
+
+    final cliente = Cliente(
+      id: widget.cliente?.id,
+      nome: nomeController.text.trim(),
+      telefone: telefoneController.text.trim(),
+      email: emailController.text.trim(),
+      endereco: enderecoController.text.trim(),
+      cpf: cpfController.text.trim(),
+    );
+
+    if (_emEdicao) {
+      await DatabaseHelper.instance.atualizarCliente(cliente.toMap());
+    } else {
+      final dados = cliente.toMap()..remove('id');
+      await DatabaseHelper.instance.inserirCliente(dados);
+    }
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Cliente salvo com sucesso!")),
-    );
+    final mensagem = _emEdicao
+        ? 'Cliente atualizado com sucesso!'
+        : 'Cliente cadastrado com sucesso!';
 
-    limparCampos();
+    if (widget.redirecionarParaListagemAoSalvar) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ListagemClientePage(mensagemSucesso: mensagem),
+        ),
+      );
+      return;
+    }
+
+    Navigator.pop(context, mensagem);
   }
 
   void limparCampos() {
@@ -53,111 +103,136 @@ class _CadastroClientePageState extends State<CadastroClientePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        color: const Color(0xFF0D3B0D),
-        child: Column(
-          children: [
-            _topo("Cadastro de cliente"),
-            const SizedBox(height: 30),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 25),
-                child: Column(
-                  children: [
-                    _input("Nome", nomeController),
-                    _input("Telefone", telefoneController),
-                    _input("Email", emailController),
-                    _input("Endereço", enderecoController),
-                    _input("CPF", cpfController),
-                    const Spacer(),
-                    _botoes(context),
-                    const SizedBox(height: 30),
-                  ],
+    final tituloPagina = _emEdicao ? 'Editar Cliente' : 'Cadastro de Cliente';
+    final tituloFormulario = _emEdicao ? 'Editar Cliente' : 'Novo Cliente';
+    final textoBotao = _emEdicao ? 'Salvar Alteracoes' : 'Cadastrar Cliente';
+
+    return MainLayout(
+      title: tituloPagina,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: AppShapes.cardRadius,
+                  boxShadow: [AppShapes.cardShadow],
+                ),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        tituloFormulario,
+                        style: AppTextStyles.heading2,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 32),
+                      InputField(
+                        controller: nomeController,
+                        labelText: 'Nome',
+                        hintText: 'Digite o nome completo',
+                        prefixIcon: Icons.person,
+                        validator: (v) =>
+                            v == null || v.trim().isEmpty ? 'Nome e obrigatorio' : null,
+                      ),
+                      const SizedBox(height: 20),
+                      InputField(
+                        controller: telefoneController,
+                        labelText: 'Telefone',
+                        hintText: '(11) 99999-9999',
+                        prefixIcon: Icons.phone,
+                        keyboardType: TextInputType.phone,
+                        validator: (v) => v == null || v.trim().isEmpty
+                            ? 'Telefone e obrigatorio'
+                            : null,
+                      ),
+                      const SizedBox(height: 20),
+                      InputField(
+                        controller: emailController,
+                        labelText: 'Email',
+                        hintText: 'email@exemplo.com',
+                        prefixIcon: Icons.email,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (v) =>
+                            v == null || v.trim().isEmpty ? 'Email e obrigatorio' : null,
+                      ),
+                      const SizedBox(height: 20),
+                      InputField(
+                        controller: enderecoController,
+                        labelText: 'Endereco',
+                        hintText: 'Rua, numero e complemento',
+                        prefixIcon: Icons.location_on,
+                        validator: (v) => v == null || v.trim().isEmpty
+                            ? 'Endereco e obrigatorio'
+                            : null,
+                      ),
+                      const SizedBox(height: 20),
+                      InputField(
+                        controller: cpfController,
+                        labelText: 'CPF',
+                        hintText: '000.000.000-00',
+                        prefixIcon: Icons.badge,
+                        keyboardType: TextInputType.number,
+                        validator: (v) =>
+                            v == null || v.trim().isEmpty ? 'CPF e obrigatorio' : null,
+                      ),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: salvarCliente,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: AppShapes.buttonRadius,
+                            ),
+                          ),
+                          child: Text(
+                            textoBotao,
+                            style: AppTextStyles.button,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 50,
+                        child: OutlinedButton(
+                          onPressed: _emEdicao
+                              ? () => Navigator.pop(context)
+                              : limparCampos,
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(
+                              color: AppColors.accent,
+                              width: 2,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: AppShapes.buttonRadius,
+                            ),
+                          ),
+                          child: Text(
+                            _emEdicao ? 'Cancelar' : 'Limpar',
+                            style: AppTextStyles.body.copyWith(
+                              color: AppColors.accent,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _topo(String titulo) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
-      decoration: const BoxDecoration(
-        color: Color(0xFF1FAA59),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 70,
-            height: 70,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.grey,
-            ),
-          ),
-          const SizedBox(width: 15),
-          Text(
-            titulo,
-            style: const TextStyle(
-              fontSize: 22,
-              color: Colors.white,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _input(String hint, TextEditingController controller) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
-      child: TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: Colors.grey[300],
-          hintText: hint,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide.none,
+            ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _botoes(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        ElevatedButton(
-          onPressed: salvarCliente,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.grey[300],
-          ),
-          child: const Text(
-            "Gravar",
-            style: TextStyle(color: Colors.black),
-          ),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.grey[300],
-          ),
-          child: const Text(
-            "Cancelar",
-            style: TextStyle(color: Colors.black),
-          ),
-        ),
-      ],
     );
   }
 }

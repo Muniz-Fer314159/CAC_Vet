@@ -1,36 +1,99 @@
 import 'package:flutter/material.dart';
+
+import '../constants/app_theme.dart';
 import '../database/database_helper.dart';
+import '../models/animal.dart';
+import '../widgets/input_field.dart';
+import '../widgets/main_layout.dart';
+import 'listagem_ani_page.dart';
 
 class CadastroAnimalPage extends StatefulWidget {
-  const CadastroAnimalPage({super.key});
+  final Animal? animal;
+  final bool redirecionarParaListagemAoSalvar;
+
+  const CadastroAnimalPage({
+    super.key,
+    this.animal,
+    this.redirecionarParaListagemAoSalvar = true,
+  });
 
   @override
   State<CadastroAnimalPage> createState() => _CadastroAnimalPageState();
 }
 
 class _CadastroAnimalPageState extends State<CadastroAnimalPage> {
+  final _formKey = GlobalKey<FormState>();
   final nomeController = TextEditingController();
   final especieController = TextEditingController();
   final racaController = TextEditingController();
   final idadeController = TextEditingController();
-  final donoController = TextEditingController();
+  final nomeDonoController = TextEditingController();
+
+  bool get _emEdicao => widget.animal != null;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final animal = widget.animal;
+    if (animal == null) return;
+
+    nomeController.text = animal.nome;
+    especieController.text = animal.especie;
+    racaController.text = animal.raca;
+    idadeController.text = animal.idade.toString();
+    nomeDonoController.text = animal.nomeDono;
+  }
 
   Future<void> salvarAnimal() async {
-    await DatabaseHelper.instance.inserirAnimal({
-      'nome': nomeController.text,
-      'especie': especieController.text,
-      'raca': racaController.text,
-      'idade': int.tryParse(idadeController.text) ?? 0,
-      'nome_dono': donoController.text,
-    });
+    if (!_formKey.currentState!.validate()) return;
+
+    final idade = int.tryParse(idadeController.text.trim());
+    if (idade == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Informe uma idade valida.'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: AppShapes.buttonRadius),
+        ),
+      );
+      return;
+    }
+
+    final animal = Animal(
+      id: widget.animal?.id,
+      nome: nomeController.text.trim(),
+      especie: especieController.text.trim(),
+      raca: racaController.text.trim(),
+      idade: idade,
+      nomeDono: nomeDonoController.text.trim(),
+    );
+
+    if (_emEdicao) {
+      await DatabaseHelper.instance.atualizarAnimal(animal.toMap());
+    } else {
+      final dados = animal.toMap()..remove('id');
+      await DatabaseHelper.instance.inserirAnimal(dados);
+    }
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Animal salvo com sucesso!")),
-    );
+    final mensagem = _emEdicao
+        ? 'Animal atualizado com sucesso!'
+        : 'Animal cadastrado com sucesso!';
 
-    limparCampos();
+    if (widget.redirecionarParaListagemAoSalvar) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ListagemAnimalPage(mensagemSucesso: mensagem),
+        ),
+      );
+      return;
+    }
+
+    Navigator.pop(context, mensagem);
   }
 
   void limparCampos() {
@@ -38,7 +101,7 @@ class _CadastroAnimalPageState extends State<CadastroAnimalPage> {
     especieController.clear();
     racaController.clear();
     idadeController.clear();
-    donoController.clear();
+    nomeDonoController.clear();
   }
 
   @override
@@ -47,120 +110,140 @@ class _CadastroAnimalPageState extends State<CadastroAnimalPage> {
     especieController.dispose();
     racaController.dispose();
     idadeController.dispose();
-    donoController.dispose();
+    nomeDonoController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        color: const Color(0xFF0D3B0D),
-        child: Column(
-          children: [
-            _topo("Cadastro de animal"),
-            const SizedBox(height: 30),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 25),
-                child: Column(
-                  children: [
-                    _input("Nome do animal", nomeController),
-                    _input("Espécie", especieController),
-                    _input("Raça", racaController),
-                    _input("Idade", idadeController),
-                    _input("Nome do dono", donoController),
-                    const Spacer(),
-                    _botoes(context),
-                    const SizedBox(height: 30),
-                  ],
+    final tituloPagina = _emEdicao ? 'Editar Animal' : 'Cadastro de Animal';
+    final tituloFormulario = _emEdicao ? 'Editar Animal' : 'Novo Animal';
+    final textoBotao = _emEdicao ? 'Salvar Alteracoes' : 'Cadastrar Animal';
+
+    return MainLayout(
+      title: tituloPagina,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: AppShapes.cardRadius,
+                  boxShadow: [AppShapes.cardShadow],
+                ),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        tituloFormulario,
+                        style: AppTextStyles.heading2,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 32),
+                      InputField(
+                        controller: nomeController,
+                        labelText: 'Nome do Animal',
+                        hintText: 'Ex: Rex, Milu',
+                        prefixIcon: Icons.pets,
+                        validator: (v) => v == null || v.trim().isEmpty
+                            ? 'Nome do animal e obrigatorio'
+                            : null,
+                      ),
+                      const SizedBox(height: 20),
+                      InputField(
+                        controller: especieController,
+                        labelText: 'Especie',
+                        hintText: 'Ex: Cachorro, Gato',
+                        prefixIcon: Icons.category,
+                        validator: (v) =>
+                            v == null || v.trim().isEmpty ? 'Especie e obrigatoria' : null,
+                      ),
+                      const SizedBox(height: 20),
+                      InputField(
+                        controller: racaController,
+                        labelText: 'Raca',
+                        hintText: 'Ex: Poodle, Siamese',
+                        prefixIcon: Icons.info_outline,
+                        validator: (v) =>
+                            v == null || v.trim().isEmpty ? 'Raca e obrigatoria' : null,
+                      ),
+                      const SizedBox(height: 20),
+                      InputField(
+                        controller: idadeController,
+                        labelText: 'Idade',
+                        hintText: 'Em anos',
+                        prefixIcon: Icons.calendar_today,
+                        keyboardType: TextInputType.number,
+                        validator: (v) =>
+                            v == null || v.trim().isEmpty ? 'Idade e obrigatoria' : null,
+                      ),
+                      const SizedBox(height: 20),
+                      InputField(
+                        controller: nomeDonoController,
+                        labelText: 'Nome do Dono',
+                        hintText: 'Nome completo',
+                        prefixIcon: Icons.person,
+                        validator: (v) => v == null || v.trim().isEmpty
+                            ? 'Nome do dono e obrigatorio'
+                            : null,
+                      ),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: salvarAnimal,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: AppShapes.buttonRadius,
+                            ),
+                          ),
+                          child: Text(
+                            textoBotao,
+                            style: AppTextStyles.button,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 50,
+                        child: OutlinedButton(
+                          onPressed: _emEdicao
+                              ? () => Navigator.pop(context)
+                              : limparCampos,
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(
+                              color: AppColors.accent,
+                              width: 2,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: AppShapes.buttonRadius,
+                            ),
+                          ),
+                          child: Text(
+                            _emEdicao ? 'Cancelar' : 'Limpar',
+                            style: AppTextStyles.body.copyWith(
+                              color: AppColors.accent,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _topo(String titulo) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
-      decoration: const BoxDecoration(
-        color: Color(0xFF1FAA59),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 70,
-            height: 70,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.grey,
-            ),
-          ),
-          const SizedBox(width: 15),
-          Text(
-            titulo,
-            style: const TextStyle(
-              fontSize: 22,
-              color: Colors.white,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _input(String hint, TextEditingController controller) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
-      child: TextField(
-        controller: controller,
-        keyboardType: hint == "Idade"
-            ? TextInputType.number
-            : TextInputType.text,
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: Colors.grey[300],
-          hintText: hint,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide.none,
+            ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _botoes(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        ElevatedButton(
-          onPressed: salvarAnimal,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.grey[300],
-          ),
-          child: const Text(
-            "Gravar",
-            style: TextStyle(color: Colors.black),
-          ),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.grey[300],
-          ),
-          child: const Text(
-            "Cancelar",
-            style: TextStyle(color: Colors.black),
-          ),
-        ),
-      ],
     );
   }
 }

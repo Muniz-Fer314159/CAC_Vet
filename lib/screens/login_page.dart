@@ -2,7 +2,9 @@ import 'package:anchieta_flutter_todo/screens/home_page.dart';
 import 'package:flutter/material.dart';
 import 'cadastro_page.dart';
 import '../widgets/input_field.dart';
+import '../widgets/paw_logo.dart';
 import '../services/auth_service.dart';
+import '../constants/app_theme.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -32,14 +34,19 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       await _authService.login(
-  username: _loginController.text.trim(),
-  password: _senhaController.text.trim(),
-);
+        username: _loginController.text.trim(),
+        password: _senhaController.text.trim(),
+      );
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login realizado com sucesso!')),
+        SnackBar(
+          content: const Text('Login realizado com sucesso!'),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: AppShapes.buttonRadius),
+        ),
       );
 
       Navigator.pushReplacement(
@@ -49,7 +56,12 @@ class _LoginPageState extends State<LoginPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: AppShapes.buttonRadius),
+        ),
       );
     } finally {
       if (mounted) setState(() => _carregando = false);
@@ -59,28 +71,30 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[300],
+      backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF003B00),
-              border: Border.all(color: Colors.black, width: 2),
-            ),
-            child: Stack(
-              alignment: Alignment.topCenter,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
               children: [
-                _logo(),
-                Positioned(
-                  top: 150,
-                  left: 30,
-                  right: 30,
-                  child: Form(
-                    key: _formKey,
-                    child: _card(),
+                const SizedBox(height: 60),
+                const PawLogo(size: 120),
+                const SizedBox(height: 32),
+                Text(
+                  'CAC Vet',
+                  style: AppTextStyles.heading1.copyWith(
+                    color: AppColors.primary,
                   ),
                 ),
+                const SizedBox(height: 8),
+                Text(
+                  'Sistema de Gestão Veterinária',
+                  style: AppTextStyles.bodySecondary,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 48),
+                _buildLoginForm(),
               ],
             ),
           ),
@@ -89,80 +103,98 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _logo() {
-    return Positioned(
-      top: 30,
-      child: Container(
-        width: 100,
-        height: 100,
-        decoration: const BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.grey,
-        ),
-        alignment: Alignment.center,
-        child: const Text('Logo'),
-      ),
-    );
-  }
-
-  Widget _card() {
+  Widget _buildLoginForm() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: Colors.green,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.surface,
+        borderRadius: AppShapes.cardRadius,
+        boxShadow: [AppShapes.cardShadow],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Login', style: TextStyle(color: Colors.white)),
-          const SizedBox(height: 8),
-
-          InputField(
-            controller: _loginController,
-            validator: (v) => v == null || v.isEmpty ? 'Digite o login' : null,
-          ),
-
-          const SizedBox(height: 16),
-
-          const Text('Senha', style: TextStyle(color: Colors.white)),
-          const SizedBox(height: 8),
-
-          InputField(
-            controller: _senhaController,
-            obscure: true,
-            validator: (v) =>
-                v == null || v.length < 4 ? 'Senha inválida' : null,
-          ),
-
-          const SizedBox(height: 20),
-
-          Center(
-            child: _carregando
-                ? const CircularProgressIndicator(color: Colors.white)
-                : ElevatedButton(
-                    onPressed: _login,
-                    child: const Text('Entrar'),
-                  ),
-          ),
-
-          const SizedBox(height: 10),
-
-          Center(
-            child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const CadastroPage()),
-                );
-              },
-              child: const Text(
-                'Cadastre-se',
-                style: TextStyle(color: Colors.white),
-              ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Entrar na sua conta',
+              style: AppTextStyles.heading2,
+              textAlign: TextAlign.center,
             ),
-          ),
-        ],
+            const SizedBox(height: 32),
+
+            InputField(
+              controller: _loginController,
+              labelText: 'Usuário',
+              hintText: 'Digite seu usuário',
+              prefixIcon: Icons.person,
+              validator: (v) => v == null || v.isEmpty ? 'Digite o usuário' : null,
+            ),
+
+            const SizedBox(height: 24),
+
+            InputField(
+              controller: _senhaController,
+              labelText: 'Senha',
+              hintText: 'Digite sua senha',
+              prefixIcon: Icons.lock,
+              obscure: true,
+              validator: (v) =>
+                  v == null || v.length < 4 ? 'Senha deve ter pelo menos 4 caracteres' : null,
+            ),
+
+            const SizedBox(height: 32),
+
+            SizedBox(
+              height: 50,
+              child: _carregando
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                      ),
+                    )
+                  : ElevatedButton(
+                      onPressed: _login,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: AppShapes.buttonRadius,
+                        ),
+                        elevation: 2,
+                      ),
+                      child: Text('Entrar', style: AppTextStyles.button),
+                    ),
+            ),
+
+            const SizedBox(height: 24),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Não tem conta? ',
+                  style: AppTextStyles.bodySecondary,
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const CadastroPage()),
+                    );
+                  },
+                  child: Text(
+                    'Cadastrar-se',
+                    style: AppTextStyles.body.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../widgets/input_field.dart';
+import '../widgets/main_layout.dart';
 import '../database/database_helper.dart';
+import '../constants/app_theme.dart';
 
 class CadastroPage extends StatefulWidget {
   const CadastroPage({super.key});
@@ -11,7 +13,6 @@ class CadastroPage extends StatefulWidget {
 
 class _CadastroPageState extends State<CadastroPage> {
   final _formKey = GlobalKey<FormState>();
-
   final loginController = TextEditingController();
   final senhaController = TextEditingController();
 
@@ -25,7 +26,12 @@ class _CadastroPageState extends State<CadastroPage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cadastro realizado!')),
+        SnackBar(
+          content: const Text('Cadastro realizado com sucesso!'),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: AppShapes.buttonRadius),
+        ),
       );
 
       loginController.clear();
@@ -44,108 +50,101 @@ class _CadastroPageState extends State<CadastroPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[300],
-      body: SafeArea(
+    return MainLayout(
+      title: 'Cadastro de Usuário',
+      child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF003B00),
-              border: Border.all(color: Colors.black, width: 2),
-            ),
-            child: Stack(
-              alignment: Alignment.topCenter,
-              children: [
-                _logo(),
-                
-                Positioned(
-                  top: 150,
-                  left: 30,
-                  right: 30,
-                  child: Form(
-                    key: _formKey,
-                    child: _card(),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              const SizedBox(height: 32),
+              Container(
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: AppShapes.cardRadius,
+                  boxShadow: [AppShapes.cardShadow],
+                ),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Criar Nova Conta',
+                        style: AppTextStyles.heading2,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 32),
+                      InputField(
+                        controller: loginController,
+                        labelText: 'Usuário',
+                        hintText: 'Digite seu usuário',
+                        prefixIcon: Icons.person,
+                        validator: (v) => v == null || v.isEmpty
+                            ? 'Digite um usuário'
+                            : null,
+                      ),
+                      const SizedBox(height: 24),
+                      InputField(
+                        controller: senhaController,
+                        labelText: 'Senha',
+                        hintText: 'Digite sua senha',
+                        prefixIcon: Icons.lock,
+                        obscure: true,
+                        validator: (v) =>
+                            v == null || v.length < 4
+                                ? 'Senha deve ter pelo menos 4 caracteres'
+                                : null,
+                      ),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: _cadastrar,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: AppShapes.buttonRadius,
+                            ),
+                          ),
+                          child: Text(
+                            'Cadastrar',
+                            style: AppTextStyles.button,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 50,
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(
+                              color: AppColors.primary,
+                              width: 2,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: AppShapes.buttonRadius,
+                            ),
+                          ),
+                          child: Text(
+                            'Voltar',
+                            style: AppTextStyles.body.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _logo() {
-    return Positioned(
-      top: 30,
-      child: Container(
-        width: 100,
-        height: 100,
-        decoration: const BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.grey,
-        ),
-        alignment: Alignment.center,
-        child: const Text("Logo"),
-      ),
-    );
-  }
-
-  Widget _card() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.green,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("Login", style: TextStyle(color: Colors.white)),
-          const SizedBox(height: 8),
-
-          InputField(
-            controller: loginController,
-            validator: (v) =>
-                v == null || v.isEmpty ? "Digite o login" : null,
-          ),
-
-          const SizedBox(height: 16),
-
-          const Text("Senha", style: TextStyle(color: Colors.white)),
-          const SizedBox(height: 8),
-
-          InputField(
-            controller: senhaController,
-            obscure: true,
-            validator: (v) =>
-                v == null || v.length < 4 ? "Senha inválida" : null,
-          ),
-
-          const SizedBox(height: 20),
-
-          Center(
-            child: ElevatedButton(
-              onPressed: _cadastrar,
-              child: const Text("Cadastrar"),
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          Center(
-            child: GestureDetector(
-              onTap: () {
-                Navigator.pop(context);
-              },
-              child: const Text(
-                "Login",
-                style: TextStyle(color: Colors.white),
               ),
-            ),
+              const SizedBox(height: 32),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

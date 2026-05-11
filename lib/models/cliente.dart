@@ -26,14 +26,14 @@ class Cliente {
     };
   }
 
-    factory Cliente.fromMap(Map<String, dynamic> map) {
-      return Cliente(
-        id: map['id'],
-        nome: map['nome'],
-        telefone: map['telefone'],
-        email: map['email'],
-        endereco: map['endereco'],
-        cpf: map['cpf'],
-   );
+  factory Cliente.fromMap(Map<String, dynamic> map) {
+    return Cliente(
+      id: map['id'] as int?,
+      nome: map['nome']?.toString() ?? '',
+      telefone: map['telefone']?.toString() ?? '',
+      email: map['email']?.toString() ?? '',
+      endereco: map['endereco']?.toString() ?? '',
+      cpf: map['cpf']?.toString() ?? '',
+    );
   }
 }
