@@ -8,11 +8,13 @@ import '../widgets/paw_logo.dart';
 import '../constants/app_theme.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+final String token;
+const HomePage({super.key, this.token = ''});
 
   @override
   Widget build(BuildContext context) {
     return MainLayout(
+      token: token,
       child: Container(
         color: AppColors.background,
         child: Column(
