@@ -33,10 +33,12 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _carregando = true);
 
     try {
-      await _authService.login(
+      final result = await _authService.login(
         username: _loginController.text.trim(),
         password: _senhaController.text.trim(),
       );
+
+      final token = result['access_token'] as String? ?? '';
 
       if (!mounted) return;
 
@@ -51,7 +53,7 @@ class _LoginPageState extends State<LoginPage> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
+        MaterialPageRoute(builder: (_) => HomePage(token: token)),
       );
     } catch (e) {
       if (!mounted) return;
